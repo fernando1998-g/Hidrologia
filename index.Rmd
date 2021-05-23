@@ -1,0 +1,214 @@
+---
+title: "Datos Hidrológicos Ejercicio Explicativo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Tarea 03: Explorando datos hidrológicos de los ríos Estrella y Banano
+##### [Dirección al código fuente](https://github.com/fernando1998-g/Hidrologia)  
+  
+![](https://images.unsplash.com/photo-1455577380025-4321f1e1dca7?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80)  
+
+###### Imágen ilustrativa 
+###### [Frothy tree-lined stream by Jon Flobrant ](https://images.unsplash.com/photo-1455577380025-4321f1e1dca7?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80)
+  
+  
+  
+### Importando los datos a Rstudio con la función (read.csv)
+##### Nombre del archivo (FDC.CSV)
+##### na.strings = "" convierte datos faltantes en espacios vacios
+```{r }
+inp <- read.csv("FDC.csv", na.strings = "")
+```
+
+
+### Para visualizar los encabezados de las primeras 5 filas del documento 
+```{r }
+head(inp)
+```
+
+### Para visualizar cuantas filas y cuantas columnas tiene el archivo
+```{r }
+dim(inp)
+```
+
+### Para corroborar que el archivo tenga datos completos 
+```{r }
+inp[!complete.cases(inp),]
+```
+
+##### **Notas:**  
+##### **Para eliminar las filas que tengan un espacio vacio (NA) en el caso que se detecte que existan:**
+##### newinp <- na.omit(inp)  
+  
+##### **Para hacer una consulta de alguna función:**
+##### ? + función por la que se va a preguntar
+##### Ej: ?na.omit
+
+### Generando Grafico para una visualización inicial y general del archivo
+##### Hidrograma: Volumen de agua por tiempo en los ríos Estrella y Banano
+```{r echo=FALSE}
+plot(inp[,2],
+     main = "Hidrograma",
+     sub = "Volumen de agua por tiempo en los ríos Estrella (Azul) y Banano (Verde)",
+     xlab = "Fecha",
+     ylab = "Caudal en mm/día",
+     type = "l", 
+     col="blue"
+     )
+lines(inp[,3], col="green")
+```
+
+### Estadística descriptiva básica
+##### Promedio de los caudales diarios en un periodo de 10 años
+###### Resumen de los datos para la columna 2(Río Estrella) y 3(Río Banano)  
+```{r }
+summary(inp[, 2:3])
+```
+##### **Interpretación:**
+###### Max (máximo)
+###### Min (Minimo)
+###### Mean (promedio (comparando entre los dos ríos se puede ver cual trasporta más agua))
+###### Median (mediana = 50% de la distribución )
+###### 1st Qu (primer cuartil (25%))
+###### 3rd Qu (tercer cuartil (75%))
+
+### Creando un Histograma  
+##### Para ver la distribución de los datos, del minimo al máximo, dónde está la mayoria de los datos, dónde está el 50% de los datos.
+##### **Río Estrella:**  
+```{r echo=FALSE}
+hist(inp[, 2],
+     main = "Histograma Río Estrella",
+     sub = "Distribución de los datos",
+     xlab = "Rango Absoluto",
+     ylab = "Frecuencia"
+     )
+```
+
+##### **Río Banano:**  
+```{r echo=FALSE}
+hist(inp[, 3],
+     main = "Histograma Río Banano",
+     sub = "Distribución de los datos",
+     xlab = "Rango Absoluto",
+     ylab = "Frecuencia"
+     )
+```
+
+### Asignando Nombres
+##### Concatenando los nombres con la función "c" 
+##### Función attach (se debe usar con cuidado, para calculos básicos es útil)
+```{r }
+names(inp) <- c("fecha", "Estrella", "Banano")
+attach(inp)
+```
+
+##### **Creando un gráfico para el río Estrella:**
+```{r echo=FALSE}
+plot(Estrella,
+     main = "Gráfico de puntos Río Estrella",
+     sub = "Volumen de agua por tiempo en el río Estrella",
+     xlab = "Seríe de tiempo",
+     ylab = "Caudal en mm/día",
+     col= "blue"
+     )
+```
+
+### Agregando valores de tiempo anuales y mensuales  
+##### Definiendo formanto de la fecha de la serie
+```{r }
+tempdate <- strptime(inp[, 1], format= "%d/%m/%Y")
+```
+
+### Funciones Apply  
+##### **Para el río Estrella:**
+##### Como son datos de tiempo se debe usar tapply 
+##### Para el nombre se usa la nomenclatura internacional MAQ
+```{r }
+MAQ_Estrella <- tapply(Estrella, format(tempdate, format= "%Y"), FUN=sum)
+MAQ_Estrella
+```
+
+##### **Repitiendo función tapply para el río Banano:**
+```{r }
+MAQ_Banano <- tapply(Banano, format(tempdate, format= "%Y"), FUN=sum)
+MAQ_Banano
+```
+
+### Juntando los dos archivos anteriores en uno solo (función "rbind") y exportarlos (creando un archivo con la función "file=")
+### Función "write" es para escribir un archivo .csv (se especificó ese formato)
+```{r }
+write.csv(rbind(MAQ_Estrella, MAQ_Banano), file="MAQ.csv")
+```
+
+### Grafico Valores Anuales de Caudal 
+##### Visualizando las funciones hechas desde tapply 
+##### El río Banano está representado en puntos y el río Estrella está representado con líneas
+```{r echo=FALSE}
+plot(MAQ_Banano, ylim=c(100,3000),
+     main = "Valores Anuales de Caudal",
+     sub = "visualizando una de las funciones de tapply, para análisis de una variable en el tiempo",
+     xlab = "Río Estrella (Línea)",
+     ylab = "Río Banano (Puntos)",
+     col= "red"
+     )
+lines(MAQ_Estrella, col= "blue")
+```
+
+### Promedio acumulado mensual del caudal en un periodo de 10 años
+##### La nomenclatura internacional cambia de anual a mensual (MMQ)
+```{r }
+MMQ_Estrella <- tapply(Estrella, format(tempdate, format= "%m"), FUN=sum)
+MMQ_Banano <- tapply(Banano, format(tempdate, format= "%m"), FUN=sum)
+```
+
+### Análisis de correlación
+##### Función cor (correlación)
+##### Se está correlacionando la columna 2 (Río Estrella) con la columna 3 (Río Banano), que son cuencas vecinas, con la intención de análizar si las cuencas tienen hidroclimáticamente una relación cuantificable, usando el método de Spearman (método no paramétrico para datos ambientales).
+##### **Gráfico Nube de puntos Río estrella contra Río Banano:**
+```{r }
+corinp <- cor(inp[,2:3], method = "spearman")
+```
+```{r echo=FALSE}
+plot(Estrella,Banano,
+     main = "Nube de puntos Río Estrella contra Río Banano",
+     sub = "Análisis de Correlación",
+     xlab = "Río Estrella (verde)",
+     ylab = "Río Banano (Azul)",
+     col= c("green", "blue"),
+     )
+```
+
+### Calculando una regresión líneal
+##### Modelo de regresión lineal con la función lm
+##### **Gráfico que visualiza algunos diagnosticos(presionando enter en la consola):**
+```{r }
+inp.lm <- lm(inp[, 2] ~ inp[, 3], data= inp)
+summary(inp.lm)
+```
+```{r echo=FALSE}
+plot(inp.lm,
+     sub = "Modelo de Regresión Líneal",
+     )
+```
+
+
+
+
+
+
+
+
+```{r }
+
+```
+
+
+```{r echo=FALSE}
+
+```
+
+
